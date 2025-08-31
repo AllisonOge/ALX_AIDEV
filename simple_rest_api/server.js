@@ -39,7 +39,7 @@ app.post('/items', (req, res) => {
     if (!name || !description) {
       return res.status(400).json({
         success: false,
-        error: 'Name and description are required'
+        error: 'The name and description parameters are required'
       });
     }
     
