@@ -1,3 +1,5 @@
+import { User as SupabaseUser } from '@supabase/supabase-js';
+
 // User types
 export interface User {
   id: string
@@ -5,6 +7,19 @@ export interface User {
   email: string
   createdAt: Date
   updatedAt: Date
+}
+
+// Supabase User type for authentication
+export type AuthUser = SupabaseUser;
+
+// Authentication context types
+export interface AuthContextType {
+  user: AuthUser | null
+  loading: boolean
+  signIn: (email: string, password: string) => Promise<{ error: any }>
+  signUp: (email: string, password: string, name: string) => Promise<{ error: any }>
+  signOut: () => Promise<void>
+  resetPassword: (email: string) => Promise<{ error: any }>
 }
 
 // Poll types

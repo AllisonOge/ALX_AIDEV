@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/app/components/ui/button"
 
 export default function Home() {
   return (
@@ -18,7 +18,7 @@ export default function Home() {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/polls">
-              <Button size="lg" className="text-lg px-8 py-3">
+              <Button size="lg" className="text-lg text-black px-8 py-3">
                 Browse Polls
               </Button>
             </Link>
@@ -86,7 +86,7 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/auth/register">
-              <Button size="lg" className="text-lg px-8 py-3">
+              <Button size="lg" className="text-lg text-black px-8 py-3">
                 Sign Up Free
               </Button>
             </Link>

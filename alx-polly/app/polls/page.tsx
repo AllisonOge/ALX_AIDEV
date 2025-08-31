@@ -1,4 +1,4 @@
-import { PollList } from "@/components/polls/poll-list"
+import { PollList } from "@/app/components/polls/poll-list"
 
 export default function PollsPage() {
   return (
