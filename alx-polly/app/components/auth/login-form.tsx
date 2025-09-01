@@ -1,18 +1,7 @@
 import { Button } from "@/app/components/ui/button"
 import { signInAction } from "@/lib/actions/auth"
-import { redirect } from "next/navigation"
 
 export function LoginForm() {
-  async function handleSubmit(formData: FormData) {
-    const result = await signInAction(formData)
-    
-    if (result.success) {
-      redirect("/polls")
-    } else {
-      // Handle error - we'll use URL search params to show error
-      redirect(`/auth/login?error=${encodeURIComponent(result.error || 'Login failed')}`)
-    }
-  }
 
   return (
     <div className="w-full max-w-md mx-auto space-y-6">
@@ -21,7 +10,7 @@ export function LoginForm() {
         <p className="text-muted-foreground">Sign in to your account</p>
       </div>
       
-      <form action={handleSubmit} className="space-y-4">
+      <form action={signInAction} className="space-y-4">
         <div>
           <label htmlFor="email" className="block text-sm font-medium mb-2">
             Email

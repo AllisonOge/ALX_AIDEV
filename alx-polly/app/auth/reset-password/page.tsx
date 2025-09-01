@@ -3,13 +3,14 @@ import { resetPasswordAction } from '@/lib/actions/auth';
 import { redirect } from 'next/navigation';
 
 interface ResetPasswordPageProps {
-  searchParams: {
+  searchParams: Promise<{
     error?: string
     success?: string
-  }
+  }>
 }
 
-export default function ResetPasswordPage({ searchParams }: ResetPasswordPageProps) {
+export default async function ResetPasswordPage({ searchParams }: ResetPasswordPageProps) {
+  const params = await searchParams
   async function handleSubmit(formData: FormData) {
     const result = await resetPasswordAction(formData);
     
@@ -20,7 +21,7 @@ export default function ResetPasswordPage({ searchParams }: ResetPasswordPagePro
     }
   }
 
-  if (searchParams.success) {
+  if (params.success) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
@@ -112,9 +113,9 @@ export default function ResetPasswordPage({ searchParams }: ResetPasswordPagePro
           </p>
         </div>
         
-        {searchParams.error && (
+        {params.error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-            {decodeURIComponent(searchParams.error)}
+            {decodeURIComponent(params.error)}
           </div>
         )}
         

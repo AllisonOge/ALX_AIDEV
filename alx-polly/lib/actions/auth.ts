@@ -11,18 +11,22 @@ export interface AuthActionResult {
   message?: string
 }
 
-export async function signInAction(formData: FormData): Promise<AuthActionResult> {
+export async function signInAction(formData: FormData): Promise<void> {
+  const email = formData.get('email') as string
+  const password = formData.get('password') as string
+
+  // Validation - do this before try-catch to avoid catching redirect errors
+  if (!email || !password) {
+    redirect(`/auth/login?error=${encodeURIComponent('Email and password are required')}`)
+  }
+
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email)) {
+    redirect(`/auth/login?error=${encodeURIComponent('Please enter a valid email address')}`)
+  }
+
   try {
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-
-    if (!email || !password) {
-      return {
-        success: false,
-        error: 'Email and password are required'
-      }
-    }
-
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
@@ -32,53 +36,47 @@ export async function signInAction(formData: FormData): Promise<AuthActionResult
     })
 
     if (error) {
-      return {
-        success: false,
-        error: getAuthErrorMessage(error)
-      }
+      redirect(`/auth/login?error=${encodeURIComponent(getAuthErrorMessage(error))}`)
     }
 
-    return {
-      success: true,
-      message: 'Successfully signed in'
-    }
+    // Success - redirect to polls page
+    redirect("/polls")
   } catch (error) {
     console.error('Sign in error:', error)
-    return {
-      success: false,
-      error: 'An unexpected error occurred'
+    // Check if this is a redirect error (which is expected)
+    if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+      throw error // Re-throw redirect errors
     }
+    redirect(`/auth/login?error=${encodeURIComponent('An unexpected error occurred')}`)
   }
 }
 
-export async function signUpAction(formData: FormData): Promise<AuthActionResult> {
+export async function signUpAction(formData: FormData): Promise<void> {
+  const name = formData.get('name') as string
+  const email = formData.get('email') as string
+  const password = formData.get('password') as string
+  const confirmPassword = formData.get('confirmPassword') as string
+
+  // Validation - do this before try-catch to avoid catching redirect errors
+  if (!name || !email || !password || !confirmPassword) {
+    redirect(`/auth/register?error=${encodeURIComponent('All fields are required')}`)
+  }
+
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email)) {
+    redirect(`/auth/register?error=${encodeURIComponent('Please enter a valid email address')}`)
+  }
+
+  if (password !== confirmPassword) {
+    redirect(`/auth/register?error=${encodeURIComponent('Passwords do not match')}`)
+  }
+
+  if (password.length < 8) {
+    redirect(`/auth/register?error=${encodeURIComponent('Password must be at least 8 characters long')}`)
+  }
+
   try {
-    const name = formData.get('name') as string
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-    const confirmPassword = formData.get('confirmPassword') as string
-
-    if (!name || !email || !password || !confirmPassword) {
-      return {
-        success: false,
-        error: 'All fields are required'
-      }
-    }
-
-    if (password !== confirmPassword) {
-      return {
-        success: false,
-        error: 'Passwords do not match'
-      }
-    }
-
-    if (password.length < 6) {
-      return {
-        success: false,
-        error: 'Password must be at least 6 characters long'
-      }
-    }
-
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
 
@@ -94,22 +92,18 @@ export async function signUpAction(formData: FormData): Promise<AuthActionResult
     })
 
     if (error) {
-      return {
-        success: false,
-        error: getAuthErrorMessage(error)
-      }
+      console.log("=>", error.message)
+      redirect(`/auth/register?error=${encodeURIComponent(getAuthErrorMessage(error))}`)
     }
 
-    return {
-      success: true,
-      message: 'Account created successfully. Please check your email to verify your account.'
-    }
+    redirect(`/auth/register/success`)
   } catch (error) {
     console.error('Sign up error:', error)
-    return {
-      success: false,
-      error: 'An unexpected error occurred'
+    // Check if this is a redirect error (which is expected)
+    if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+      throw error // Re-throw redirect errors
     }
+    redirect(`/auth/register?error=${encodeURIComponent('An unexpected error occurred')}`)
   }
 }
 
@@ -134,6 +128,15 @@ export async function resetPasswordAction(formData: FormData): Promise<AuthActio
       return {
         success: false,
         error: 'Email is required'
+      }
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return {
+        success: false,
+        error: 'Please enter a valid email address'
       }
     }
 
@@ -164,7 +167,7 @@ export async function resetPasswordAction(formData: FormData): Promise<AuthActio
   }
 }
 
-export async function getCurrentUser() {
+export async function getCurrentUser(): Promise<any | null> {
   try {
     const cookieStore = cookies()
     const supabase = await createClient(cookieStore)
@@ -191,8 +194,8 @@ function getAuthErrorMessage(error: AuthError): string {
       return 'Please check your email and click the confirmation link to verify your account.'
     case 'User already registered':
       return 'An account with this email already exists. Please sign in instead.'
-    case 'Password should be at least 6 characters':
-      return 'Password must be at least 6 characters long.'
+    case 'Password should be at least 8 characters':
+      return 'Password must be at least 8 characters long.'
     case 'Unable to validate email address: invalid format':
       return 'Please enter a valid email address.'
     default:

@@ -3,17 +3,6 @@ import { signUpAction } from "@/lib/actions/auth"
 import { redirect } from "next/navigation"
 
 export function RegisterForm() {
-  async function handleSubmit(formData: FormData) {
-    const result = await signUpAction(formData)
-    
-    if (result.success) {
-      redirect("/auth/register/success")
-    } else {
-      // Handle error - we'll use URL search params to show error
-      redirect(`/auth/register?error=${encodeURIComponent(result.error || 'Registration failed')}`)
-    }
-  }
-
   return (
     <div className="w-full max-w-md mx-auto space-y-6">
       <div className="text-center">
@@ -21,7 +10,7 @@ export function RegisterForm() {
         <p className="text-muted-foreground">Join our polling community</p>
       </div>
       
-      <form action={handleSubmit} className="space-y-4">
+      <form action={signUpAction} className="space-y-4">
         <div>
           <label htmlFor="name" className="block text-sm font-medium mb-2">
             Full Name
