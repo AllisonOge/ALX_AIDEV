@@ -44,59 +44,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       async (event, session) => {
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Refresh the page on auth state changes to sync with server
+        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+          window.location.reload();
+        }
       }
     );
 
     return () => subscription.unsubscribe();
   }, [supabase.auth]);
 
+  // These methods are now deprecated in favor of server actions
+  // but kept for backward compatibility with any remaining client components
   const signIn = async (email: string, password: string) => {
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      return { error };
-    } catch (error) {
-      return { error };
-    }
+    console.warn('signIn method is deprecated. Use signInAction server action instead.');
+    return { error: new Error('Use server actions for authentication') };
   };
 
   const signUp = async (email: string, password: string, name: string) => {
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name,
-          },
-          emailRedirectTo: `${window.location.origin}/auth/verify-email`,
-        },
-      });
-      return { error };
-    } catch (error) {
-      return { error };
-    }
+    console.warn('signUp method is deprecated. Use signUpAction server action instead.');
+    return { error: new Error('Use server actions for authentication') };
   };
 
   const signOut = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
+    console.warn('signOut method is deprecated. Use signOutAction server action instead.');
   };
 
   const resetPassword = async (email: string) => {
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/verify-email`,
-      });
-      return { error };
-    } catch (error) {
-      return { error };
-    }
+    console.warn('resetPassword method is deprecated. Use resetPasswordAction server action instead.');
+    return { error: new Error('Use server actions for authentication') };
   };
 
   const value: AuthContextType = {

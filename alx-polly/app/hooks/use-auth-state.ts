@@ -1,7 +1,7 @@
 import { useAuth } from '@/app/contexts/auth-context';
 
 export const useAuthState = () => {
-  const { user, loading, signIn, signUp, signOut, resetPassword } = useAuth();
+  const { user, loading } = useAuth();
 
   const isAuthenticated = !!user;
   const isEmailVerified = user?.email_confirmed_at ? true : false;
@@ -13,9 +13,7 @@ export const useAuthState = () => {
     isAuthenticated,
     isEmailVerified,
     userDisplayName,
-    signIn,
-    signUp,
-    signOut,
-    resetPassword,
+    // Note: signIn, signUp, signOut, resetPassword are deprecated
+    // Use server actions instead: signInAction, signUpAction, signOutAction, resetPasswordAction
   };
 };

@@ -1,60 +1,17 @@
-"use client"
-
-import { useState } from "react"
 import { Button } from "@/app/components/ui/button"
-import { useAuth } from "@/app/contexts/auth-context"
-import { useRouter } from "next/navigation"
-import { getAuthErrorMessage } from "@/lib/auth-utils"
+import { signUpAction } from "@/lib/actions/auth"
+import { redirect } from "next/navigation"
 
 export function RegisterForm() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: ""
-  })
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
-  const { signUp } = useAuth()
-  const router = useRouter()
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  async function handleSubmit(formData: FormData) {
+    const result = await signUpAction(formData)
     
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
-      return
+    if (result.success) {
+      redirect("/auth/register/success")
+    } else {
+      // Handle error - we'll use URL search params to show error
+      redirect(`/auth/register?error=${encodeURIComponent(result.error || 'Registration failed')}`)
     }
-
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters long")
-      return
-    }
-
-    setIsLoading(true)
-    setError("")
-
-    try {
-      const { error: signUpError } = await signUp(formData.email, formData.password, formData.name)
-      
-      if (signUpError) {
-        setError(getAuthErrorMessage(signUpError))
-      } else {
-        // Redirect to success page
-        router.push("/auth/register/success")
-      }
-    } catch (err) {
-      setError("An unexpected error occurred")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    })
   }
 
   return (
@@ -64,13 +21,7 @@ export function RegisterForm() {
         <p className="text-muted-foreground">Join our polling community</p>
       </div>
       
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-          {error}
-        </div>
-      )}
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form action={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="name" className="block text-sm font-medium mb-2">
             Full Name
@@ -79,12 +30,9 @@ export function RegisterForm() {
             id="name"
             name="name"
             type="text"
-            value={formData.name}
-            onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter your full name"
             required
-            disabled={isLoading}
           />
         </div>
         
@@ -96,12 +44,9 @@ export function RegisterForm() {
             id="email"
             name="email"
             type="email"
-            value={formData.email}
-            onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter your email"
             required
-            disabled={isLoading}
           />
         </div>
         
@@ -113,12 +58,9 @@ export function RegisterForm() {
             id="password"
             name="password"
             type="password"
-            value={formData.password}
-            onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Create a password"
             required
-            disabled={isLoading}
           />
         </div>
         
@@ -130,21 +72,17 @@ export function RegisterForm() {
             id="confirmPassword"
             name="confirmPassword"
             type="password"
-            value={formData.confirmPassword}
-            onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Confirm your password"
             required
-            disabled={isLoading}
           />
         </div>
         
         <Button
           type="submit"
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-          disabled={isLoading}
         >
-          {isLoading ? "Creating Account..." : "Create Account"}
+          Create Account
         </Button>
       </form>
       

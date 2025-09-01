@@ -1,38 +1,26 @@
-'use client';
-
-import { useState } from 'react';
 import { Button } from '@/app/components/ui/button';
-import { useAuth } from '@/app/contexts/auth-context';
-import { getAuthErrorMessage } from '@/lib/auth-utils';
+import { resetPasswordAction } from '@/lib/actions/auth';
+import { redirect } from 'next/navigation';
 
-export default function ResetPasswordPage() {
-  const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-  const { resetPassword } = useAuth();
+interface ResetPasswordPageProps {
+  searchParams: {
+    error?: string
+    success?: string
+  }
+}
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-
-    try {
-      const { error: resetError } = await resetPassword(email);
-      
-      if (resetError) {
-        setError(getAuthErrorMessage(resetError));
-      } else {
-        setSuccess(true);
-      }
-    } catch (err) {
-      setError('An unexpected error occurred');
-    } finally {
-      setIsLoading(false);
+export default function ResetPasswordPage({ searchParams }: ResetPasswordPageProps) {
+  async function handleSubmit(formData: FormData) {
+    const result = await resetPasswordAction(formData);
+    
+    if (result.success) {
+      redirect('/auth/reset-password?success=true');
+    } else {
+      redirect(`/auth/reset-password?error=${encodeURIComponent(result.error || 'Reset failed')}`);
     }
-  };
+  }
 
-  if (success) {
+  if (searchParams.success) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
@@ -104,12 +92,9 @@ export default function ResetPasswordPage() {
           <div className="text-center">
             <p className="text-sm text-gray-600">
               Didn't receive the email? Check your spam folder or{' '}
-              <button 
-                onClick={() => setSuccess(false)}
-                className="text-blue-600 hover:underline"
-              >
+              <a href="/auth/reset-password" className="text-blue-600 hover:underline">
                 try again
-              </button>
+              </a>
             </p>
           </div>
         </div>
@@ -127,35 +112,32 @@ export default function ResetPasswordPage() {
           </p>
         </div>
         
-        {error && (
+        {searchParams.error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-            {error}
+            {decodeURIComponent(searchParams.error)}
           </div>
         )}
         
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form action={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium mb-2">
               Email Address
             </label>
             <input
               id="email"
+              name="email"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter your email address"
               required
-              disabled={isLoading}
             />
           </div>
           
           <Button
             type="submit"
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-            disabled={isLoading}
           >
-            {isLoading ? "Sending Reset Link..." : "Send Reset Link"}
+            Send Reset Link
           </Button>
         </form>
         
