@@ -47,7 +47,7 @@ export async function NavigationServer() {
                 <form action={signOutAction}>
                   <Button 
                     type="submit"
-                    variant="outline" 
+                    variant="link" 
                     size="sm"
                     className="text-gray-700 border-gray-300 hover:bg-gray-50"
                   >
@@ -59,9 +59,9 @@ export async function NavigationServer() {
               <div className="flex items-center space-x-4">
                 <Link href="/auth/login">
                   <Button 
-                    // variant="outline" 
+                    variant="link" 
                     size="sm"
-                    // className="text-gray-700 border-gray-300 hover:bg-gray-50"
+                    className="text-gray-700 border-gray-300 hover:bg-gray-50"
                   >
                     Sign In
                   </Button>
@@ -69,7 +69,7 @@ export async function NavigationServer() {
                 <Link href="/auth/register">
                   <Button 
                     size="sm"
-                    // className="bg-blue-600 hover:bg-blue-700 text-white"
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     Sign Up
                   </Button>
