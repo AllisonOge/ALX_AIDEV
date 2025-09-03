@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { AuthError } from '@supabase/supabase-js'
+import { User } from '@supabase/supabase-js'
 
 export interface AuthActionResult {
   success: boolean
@@ -11,24 +12,46 @@ export interface AuthActionResult {
   message?: string
 }
 
+// Utility function to validate email
+function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
+}
+
+// Utility function to create Supabase client
+async function getSupabaseClient() {
+  const cookieStore = cookies()
+  return await createClient(cookieStore)
+}
+
+// Utility function to handle auth errors
+function handleAuthError(error: unknown, redirectPath: string): never {
+  console.error(`Auth error (${redirectPath}):`, error)
+  
+  // Check if this is a redirect error (which is expected)
+  if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+    throw error // Re-throw redirect errors
+  }
+  
+  redirect(`${redirectPath}?error=${encodeURIComponent('An unexpected error occurred')}`)
+}
+
 export async function signInAction(formData: FormData): Promise<void> {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
+  const redirectPath = '/auth/login'
 
   // Validation - do this before try-catch to avoid catching redirect errors
   if (!email || !password) {
-    redirect(`/auth/login?error=${encodeURIComponent('Email and password are required')}`)
+    redirect(`${redirectPath}?error=${encodeURIComponent('Email and password are required')}`)
   }
 
-  // Basic email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(email)) {
-    redirect(`/auth/login?error=${encodeURIComponent('Please enter a valid email address')}`)
+  if (!validateEmail(email)) {
+    redirect(`${redirectPath}?error=${encodeURIComponent('Please enter a valid email address')}`)
   }
 
   try {
-    const cookieStore = cookies()
-    const supabase = await createClient(cookieStore)
+    const supabase = await getSupabaseClient()
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -36,18 +59,13 @@ export async function signInAction(formData: FormData): Promise<void> {
     })
 
     if (error) {
-      redirect(`/auth/login?error=${encodeURIComponent(getAuthErrorMessage(error))}`)
+      redirect(`${redirectPath}?error=${encodeURIComponent(getAuthErrorMessage(error))}`)
     }
 
     // Success - redirect to polls page
     redirect("/polls")
   } catch (error) {
-    console.error('Sign in error:', error)
-    // Check if this is a redirect error (which is expected)
-    if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
-      throw error // Re-throw redirect errors
-    }
-    redirect(`/auth/login?error=${encodeURIComponent('An unexpected error occurred')}`)
+    handleAuthError(error, redirectPath)
   }
 }
 
@@ -56,62 +74,51 @@ export async function signUpAction(formData: FormData): Promise<void> {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const confirmPassword = formData.get('confirmPassword') as string
+  const redirectPath = '/auth/register'
 
   // Validation - do this before try-catch to avoid catching redirect errors
   if (!name || !email || !password || !confirmPassword) {
-    redirect(`/auth/register?error=${encodeURIComponent('All fields are required')}`)
+    redirect(`${redirectPath}?error=${encodeURIComponent('All fields are required')}`)
   }
 
-  // Basic email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(email)) {
-    redirect(`/auth/register?error=${encodeURIComponent('Please enter a valid email address')}`)
+  if (!validateEmail(email)) {
+    redirect(`${redirectPath}?error=${encodeURIComponent('Please enter a valid email address')}`)
   }
 
   if (password !== confirmPassword) {
-    redirect(`/auth/register?error=${encodeURIComponent('Passwords do not match')}`)
+    redirect(`${redirectPath}?error=${encodeURIComponent('Passwords do not match')}`)
   }
 
   if (password && password.length < 8) {
-    redirect(`/auth/register?error=${encodeURIComponent('Password must be at least 8 characters long')}`)
+    redirect(`${redirectPath}?error=${encodeURIComponent('Password must be at least 8 characters long')}`)
   }
 
   try {
-    const cookieStore = cookies()
-    const supabase = await createClient(cookieStore)
+    const supabase = await getSupabaseClient()
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: {
-          name,
-        },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/verify-email`,
+        data: { name },
+        emailRedirectTo: `${siteUrl}/auth/verify-email`,
       },
     })
 
     if (error) {
-      console.log("=>", error.message)
-      redirect(`/auth/register?error=${encodeURIComponent(getAuthErrorMessage(error))}`)
+      redirect(`${redirectPath}?error=${encodeURIComponent(getAuthErrorMessage(error))}`)
     }
 
-    redirect(`/auth/register/success`)
+    redirect(`${redirectPath}/success`)
   } catch (error) {
-    console.error('Sign up error:', error)
-    // Check if this is a redirect error (which is expected)
-    if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
-      throw error // Re-throw redirect errors
-    }
-    redirect(`/auth/register?error=${encodeURIComponent('An unexpected error occurred')}`)
+    handleAuthError(error, redirectPath)
   }
 }
 
 export async function signOutAction(): Promise<void> {
   try {
-    const cookieStore = cookies()
-    const supabase = await createClient(cookieStore)
-    
+    const supabase = await getSupabaseClient()
     await supabase.auth.signOut()
   } catch (error) {
     console.error('Sign out error:', error)
@@ -131,20 +138,18 @@ export async function resetPasswordAction(formData: FormData): Promise<AuthActio
       }
     }
 
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
+    if (!validateEmail(email)) {
       return {
         success: false,
         error: 'Please enter a valid email address'
       }
     }
 
-    const cookieStore = cookies()
-    const supabase = await createClient(cookieStore)
+    const supabase = await getSupabaseClient()
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/reset-password`,
+      redirectTo: `${siteUrl}/auth/reset-password`,
     })
 
     if (error) {
@@ -167,11 +172,9 @@ export async function resetPasswordAction(formData: FormData): Promise<AuthActio
   }
 }
 
-export async function getCurrentUser(): Promise<any | null> {
+export async function getCurrentUser(): Promise<User | null> {
   try {
-    const cookieStore = cookies()
-    const supabase = await createClient(cookieStore)
-    
+    const supabase = await getSupabaseClient()
     const { data: { user }, error } = await supabase.auth.getUser()
     
     if (error) {
