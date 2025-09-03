@@ -1,5 +1,5 @@
 import { Button } from '@/app/components/ui/button';
-import { resetPasswordAction } from '@/lib/actions/auth';
+import { resetPasswordAction } from '@/lib/actions/auth-before';
 import { redirect } from 'next/navigation';
 
 interface ResetPasswordPageProps {

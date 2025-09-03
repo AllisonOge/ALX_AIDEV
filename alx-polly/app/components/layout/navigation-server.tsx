@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/app/components/ui/button"
-import { getCurrentUser } from "@/lib/actions/auth"
-import { signOutAction } from "@/lib/actions/auth"
+import { getCurrentUser } from "@/lib/actions/auth-before"
+import { signOutAction } from "@/lib/actions/auth-before"
 import { formatUserDisplayName } from "@/lib/auth-utils"
 
 export async function NavigationServer() {

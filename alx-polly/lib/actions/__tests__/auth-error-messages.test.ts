@@ -1,5 +1,5 @@
 import { AuthError } from '@supabase/supabase-js';
-import { getAuthErrorMessage } from '../auth';
+import { getAuthErrorMessage } from '../auth-before';
 
 describe('getAuthErrorMessage', () => {
   it('should return appropriate message for invalid login credentials', () => {

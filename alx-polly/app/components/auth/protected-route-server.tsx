@@ -1,4 +1,4 @@
-import { getCurrentUser } from '@/lib/actions/auth';
+import { getCurrentUser } from '@/lib/actions/auth-before';
 import { redirect } from 'next/navigation';
 
 interface ProtectedRouteServerProps {

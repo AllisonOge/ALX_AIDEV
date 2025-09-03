@@ -1,5 +1,5 @@
 import { Button } from "@/app/components/ui/button"
-import { signUpAction } from "@/lib/actions/auth"
+import { signUpAction } from "@/lib/actions/auth-before"
 import { redirect } from "next/navigation"
 
 export function RegisterForm() {

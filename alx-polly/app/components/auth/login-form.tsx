@@ -1,5 +1,5 @@
 import { Button } from "@/app/components/ui/button"
-import { signInAction } from "@/lib/actions/auth"
+import { signInAction } from "@/lib/actions/auth-before"
 
 export function LoginForm() {
 

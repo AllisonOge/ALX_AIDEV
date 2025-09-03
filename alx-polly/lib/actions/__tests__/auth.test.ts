@@ -1,4 +1,4 @@
-import { signInAction, signUpAction, signOutAction, resetPasswordAction, getCurrentUser } from '../auth';
+import { signInAction, signUpAction, signOutAction, resetPasswordAction, getCurrentUser } from '../auth-before';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
