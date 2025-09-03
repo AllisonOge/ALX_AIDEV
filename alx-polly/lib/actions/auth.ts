@@ -72,7 +72,7 @@ export async function signUpAction(formData: FormData): Promise<void> {
     redirect(`/auth/register?error=${encodeURIComponent('Passwords do not match')}`)
   }
 
-  if (password.length < 8) {
+  if (password && password.length < 8) {
     redirect(`/auth/register?error=${encodeURIComponent('Password must be at least 8 characters long')}`)
   }
 
@@ -186,7 +186,7 @@ export async function getCurrentUser(): Promise<any | null> {
   }
 }
 
-function getAuthErrorMessage(error: AuthError): string {
+export function getAuthErrorMessage(error: AuthError): string {
   switch (error.message) {
     case 'Invalid login credentials':
       return 'Invalid email or password. Please try again.'

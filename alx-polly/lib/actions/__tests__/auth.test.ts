@@ -4,9 +4,7 @@ import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 
 // Mock dependencies
-jest.mock('@/lib/supabase/server', () => ({
-  createClient: jest.fn(),
-}));
+jest.mock('@/lib/supabase/server');
 
 jest.mock('next/navigation', () => ({
   redirect: jest.fn(),

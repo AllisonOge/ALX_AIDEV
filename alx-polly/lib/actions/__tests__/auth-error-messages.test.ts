@@ -1,11 +1,5 @@
 import { AuthError } from '@supabase/supabase-js';
-
-// Import the function indirectly since it's not exported
-// We'll use a workaround to test it
-import * as authModule from '../auth';
-
-// Access the private function using type assertion
-const getAuthErrorMessage = (authModule as any).getAuthErrorMessage;
+import { getAuthErrorMessage } from '../auth';
 
 describe('getAuthErrorMessage', () => {
   it('should return appropriate message for invalid login credentials', () => {
