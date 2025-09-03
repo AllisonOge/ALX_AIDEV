@@ -59,7 +59,7 @@ export async function signInAction(formData: FormData): Promise<void> {
     })
 
     if (error) {
-      redirect(`${redirectPath}?error=${encodeURIComponent(getAuthErrorMessage(error))}`)
+      redirect(`${redirectPath}?error=${encodeURIComponent(await getAuthErrorMessage(error))}`)
     }
 
     // Success - redirect to polls page
@@ -107,7 +107,7 @@ export async function signUpAction(formData: FormData): Promise<void> {
     })
 
     if (error) {
-      redirect(`${redirectPath}?error=${encodeURIComponent(getAuthErrorMessage(error))}`)
+      redirect(`${redirectPath}?error=${encodeURIComponent(await getAuthErrorMessage(error))}`)
     }
 
     redirect(`${redirectPath}/success`)
@@ -155,7 +155,7 @@ export async function resetPasswordAction(formData: FormData): Promise<AuthActio
     if (error) {
       return {
         success: false,
-        error: getAuthErrorMessage(error)
+        error: await getAuthErrorMessage(error)
       }
     }
 
@@ -189,7 +189,7 @@ export async function getCurrentUser(): Promise<User | null> {
   }
 }
 
-export function getAuthErrorMessage(error: AuthError): string {
+export async function getAuthErrorMessage(error: AuthError): Promise<string> {
   switch (error.message) {
     case 'Invalid login credentials':
       return 'Invalid email or password. Please try again.'
