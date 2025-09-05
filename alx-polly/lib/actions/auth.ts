@@ -12,19 +12,29 @@ export interface AuthActionResult {
   message?: string
 }
 
-// Utility function to validate email
+/**
+ * Validates an email address format.
+ * Used throughout authentication flows to ensure user input is correct before processing.
+ * Connects to the app logic by preventing invalid emails from being sent to Supabase or used in redirects.
+ */
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   return emailRegex.test(email)
 }
 
-// Utility function to create Supabase client
+/**
+ * Creates and returns a Supabase client instance using cookies for session management.
+ * Centralizes Supabase client creation for all authentication actions, ensuring consistent session handling.
+ */
 async function getSupabaseClient() {
   const cookieStore = cookies()
   return await createClient(cookieStore)
 }
 
-// Utility function to handle auth errors
+/**
+ * Handles authentication errors and redirects the user to the appropriate path with an error message.
+ * Ensures that unexpected errors do not leak sensitive details and users are guided back to the correct UI flow.
+ */
 function handleAuthError(error: unknown, redirectPath: string): never {
   console.error(`Auth error (${redirectPath}):`, error)
   
@@ -36,6 +46,10 @@ function handleAuthError(error: unknown, redirectPath: string): never {
   redirect(`${redirectPath}?error=${encodeURIComponent('An unexpected error occurred')}`)
 }
 
+/**
+ * Handles user sign-in logic, including validation and authentication with Supabase.
+ * Redirects users based on success or failure, integrating with the login UI and error messaging system.
+ */
 export async function signInAction(formData: FormData): Promise<void> {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
@@ -69,6 +83,10 @@ export async function signInAction(formData: FormData): Promise<void> {
   }
 }
 
+/**
+ * Handles user registration, including validation, account creation, and email verification setup.
+ * Connects to the registration UI and ensures new users are properly onboarded and redirected.
+ */
 export async function signUpAction(formData: FormData): Promise<void> {
   const name = formData.get('name') as string
   const email = formData.get('email') as string
@@ -116,6 +134,10 @@ export async function signUpAction(formData: FormData): Promise<void> {
   }
 }
 
+/**
+ * Signs out the current user from Supabase and redirects to the login page.
+ * Maintains session integrity and ensures users are properly logged out from the app.
+ */
 export async function signOutAction(): Promise<void> {
   try {
     const supabase = await getSupabaseClient()
@@ -127,6 +149,10 @@ export async function signOutAction(): Promise<void> {
   redirect('/auth/login')
 }
 
+/**
+ * Initiates the password reset flow for a user, sending a reset email via Supabase.
+ * Integrates with the reset password UI and provides feedback for success or failure.
+ */
 export async function resetPasswordAction(formData: FormData): Promise<AuthActionResult> {
   try {
     const email = formData.get('email') as string
@@ -172,6 +198,10 @@ export async function resetPasswordAction(formData: FormData): Promise<AuthActio
   }
 }
 
+/**
+ * Retrieves the currently authenticated user from Supabase.
+ * Used to determine user session state and personalize the app experience.
+ */
 export async function getCurrentUser(): Promise<User | null> {
   try {
     const supabase = await getSupabaseClient()
@@ -189,6 +219,10 @@ export async function getCurrentUser(): Promise<User | null> {
   }
 }
 
+/**
+ * Maps Supabase authentication error messages to user-friendly strings for display in the UI.
+ * Centralizes error messaging for all authentication actions, improving consistency and clarity.
+ */
 export async function getAuthErrorMessage(error: AuthError): Promise<string> {
   switch (error.message) {
     case 'Invalid login credentials':
