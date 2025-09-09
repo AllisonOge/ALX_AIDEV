@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { AuthError } from '@supabase/supabase-js'
 import { User } from '@supabase/supabase-js'
+import { createUser } from './users'
 
 export interface AuthActionResult {
   success: boolean
@@ -115,7 +116,7 @@ export async function signUpAction(formData: FormData): Promise<void> {
     const supabase = await getSupabaseClient()
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -126,6 +127,18 @@ export async function signUpAction(formData: FormData): Promise<void> {
 
     if (error) {
       redirect(`${redirectPath}?error=${encodeURIComponent(await getAuthErrorMessage(error))}`)
+    }
+
+    // Insert user into users table with UUID from Supabase Auth
+    const userId = data.user?.id
+    if (userId) {
+      const userInsertResult = await createUser({ id: userId, email, name })
+      if (!userInsertResult.success) {
+        // Optionally handle DB error (log, notify, etc.)
+        console.error('Failed to insert user into users table:', userInsertResult.error)
+      }
+    } else {
+      console.error('No user ID returned from Supabase signUp')
     }
 
     redirect(`${redirectPath}/success`)

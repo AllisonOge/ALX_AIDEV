@@ -29,13 +29,41 @@ The schema includes helper functions:
 - `get_poll_total_votes()` - Calculates the total votes for a poll
 - `get_option_votes()` - Calculates the votes for a specific poll option
 
+
 ## How to Apply the Schema
+
+### Prerequisites for Local Development
+
+1. **Install Docker Desktop**
+   - Download and install Docker Desktop from [https://docs.docker.com/desktop](https://docs.docker.com/desktop)
+   - Start Docker Desktop and ensure it is running
+
+2. **Install Supabase CLI**
+   ```bash
+   npm install -g supabase
+   ```
+
+3. **Start Supabase Local Stack**
+   ```bash
+   npx supabase start
+   ```
+   This will start the local Supabase services (database, API, etc.) using Docker.
 
 ### Option 1: Using Supabase CLI
 
-1. Install the Supabase CLI if you haven't already:
+1. Link your project (if not already linked):
    ```bash
-   npm install -g supabase
+   supabase link --project-ref your-project-ref
+   ```
+
+2. Apply the schema:
+   ```bash
+   supabase db push
+   ```
+
+3. To reset the local database (for development):
+   ```bash
+   supabase db reset
    ```
 
 ### Option 2: Using npm scripts
@@ -51,36 +79,25 @@ The schema includes helper functions:
    npm run setup-db
    ```
 
-4. To apply migrations (prints each migration SQL):
+3. To apply migrations (prints each migration SQL):
    ```powershell
    npm run setup-db
    ```
 
-5. To check backend connectivity and required tables:
+4. To check backend connectivity and required tables:
    ```powershell
    npm run check-backend
    ```
 
-> **Note:** The setup script processes all SQL files in `supabase/migrations/` in order. Actual schema changes must be applied via Supabase CLI or dashboard. The backend check script verifies connection and table existence.
-
-3. To seed the database with initial data, run:
+5. To seed the database with initial data, run:
    ```powershell
    npm run seed-db
    ```
 
-> **Note:** The setup script currently prints the schema. For actual schema migration, use Supabase CLI or dashboard. The seed script inserts example data into the `polls` table. Edit `seed-db.js` to customize seeding as needed.
+> **Note:** The setup script processes all SQL files in `supabase/migrations/` in order. Actual schema changes must be applied via Supabase CLI or dashboard. The backend check script verifies connection and table existence.
+> The seed script inserts example data into the `polls` table. Edit `seed-db.js` to customize seeding as needed.
 
-2. Link your project (if not already linked):
-   ```bash
-   supabase link --project-ref your-project-ref
-   ```
-
-3. Apply the schema:
-   ```bash
-   supabase db push
-   ```
-
-### Option 2: Using Supabase Dashboard
+### Option 3: Using Supabase Dashboard
 
 1. Log in to your Supabase dashboard
 2. Navigate to the SQL Editor

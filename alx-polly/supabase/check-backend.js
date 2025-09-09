@@ -19,6 +19,22 @@ const supabase = createClient(
 async function checkDatabase() {
     console.log('🔍 Checking database setup...');
     try {
+
+        // Check if users table exists
+        const { data: usersData, error: usersError } = await supabase
+            .from('users')
+            .select('count()')
+            .limit(1);
+        if (usersError) {
+            if (usersError.message.includes('does not exist')) {
+                console.error('❌ The "users" table does not exist. Please run the migrations.');
+            } else {
+                console.error('❌ Error checking users table:', usersError.message);
+            }
+            return false;
+        }
+        console.log('✅ "users" table exists');
+
         // Check if polls table exists
         const { data: pollsData, error: pollsError } = await supabase
             .from('polls')
@@ -33,6 +49,21 @@ async function checkDatabase() {
             return false;
         }
         console.log('✅ "polls" table exists');
+
+        // Check if poll_options table exists
+        const { data: optionsData, error: optionsError } = await supabase
+            .from('poll_options')
+            .select('count()')
+            .limit(1);
+        if (optionsError) {
+            if (optionsError.message.includes('does not exist')) {
+                console.error('❌ The "poll_options" table does not exist. Please run the migrations.');
+            } else {
+                console.error('❌ Error checking poll_options table:', optionsError.message);
+            }
+            return false;
+        }
+        console.log('✅ "poll_options" table exists');
 
         // Check if votes table exists
         const { data: votesData, error: votesError } = await supabase

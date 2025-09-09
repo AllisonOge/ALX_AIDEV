@@ -121,7 +121,7 @@ export async function getPolls(page = 1, limit = 10, onlyPublic = true) {
     
     let query = supabase
       .from('polls')
-      .select('*, user:users(name)', { count: 'exact' });
+      .select(`*, user:users(name), options:poll_options(id, text, votes:votes(count))`, { count: 'exact' });
     
     if (onlyPublic) {
       query = query.eq('is_public', true);

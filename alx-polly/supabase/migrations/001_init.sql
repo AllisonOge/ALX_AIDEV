@@ -1,7 +1,6 @@
 -- Initialization migration for ALX-Polly database
--- (copied from schema.sql)
 
--- Create users table (this is managed by Supabase Auth, but we reference it)
+-- Create users table (refers to auth.users)
 CREATE TABLE IF NOT EXISTS users (
   id UUID REFERENCES auth.users NOT NULL PRIMARY KEY,
   name TEXT,
@@ -43,13 +42,32 @@ CREATE TABLE IF NOT EXISTS votes (
   UNIQUE(poll_id, user_id)
 );
 
--- Create RLS policies
--- Enable Row Level Security
+-- Enable Row Level Security for all tables
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE polls ENABLE ROW LEVEL SECURITY;
 ALTER TABLE poll_options ENABLE ROW LEVEL SECURITY;
 ALTER TABLE votes ENABLE ROW LEVEL SECURITY;
 
--- Policies for polls
+-- Policies for users
+-- Users can view their own profile
+CREATE POLICY "Users can view their own profile"
+  ON users FOR SELECT
+  USING (id = auth.uid());
+
+-- Users can update their own profile
+CREATE POLICY "Users can update their own profile"
+  ON users FOR UPDATE
+  USING (id = auth.uid());
+
+-- Users can delete their own profile
+CREATE POLICY "Users can delete their own profile"
+  ON users FOR DELETE
+  USING (id = auth.uid());
+
+-- Users can insert their own profile
+CREATE POLICY "Users can insert their own profile"
+  ON users FOR INSERT
+  WITH CHECK (id = auth.uid());
 -- Anyone can view public polls
 CREATE POLICY "Anyone can view public polls" 
   ON polls FOR SELECT 
