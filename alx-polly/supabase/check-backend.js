@@ -3,11 +3,40 @@
  * This script checks if the database is properly set up
  * It verifies that the required tables exist and have the correct structure
  */
+const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config({ path: '.env.local' });
+const dotenv = require('dotenv');
+
+function getArg(name) {
+    const prefix = `--${name}=`;
+    const arg = process.argv.find(a => a.startsWith(prefix));
+    return arg ? arg.slice(prefix.length) : undefined;
+}
+
+// Choose env file: explicit flag > NODE_ENV > default local
+const envFlag = (getArg('env') || '').toLowerCase();
+let envFile;
+if (envFlag === 'production' || envFlag === 'prod' || envFlag === 'remote') {
+    envFile = '.env.production';
+} else if (envFlag === 'test') {
+    envFile = '.env.test';
+} else if (envFlag === 'development' || envFlag === 'dev' || envFlag === 'local') {
+    envFile = '.env.local';
+} else if (process.env.NODE_ENV === 'production') {
+    envFile = '.env.production';
+} else if (process.env.NODE_ENV === 'test') {
+    envFile = '.env.test';
+} else {
+    envFile = '.env.local';
+}
+
+// Load base .env (if present) then env-specific to override
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({ path: path.resolve(process.cwd(), envFile) });
 
 if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.error('❌ Missing environment variables. Make sure you have a .env.local file with NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.');
+    const hint = envFile.includes('production') ? '.env.production' : '.env.local';
+    console.error(`❌ Missing environment variables. Make sure you have a ${hint} file with NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.`);
     process.exit(1);
 }
 

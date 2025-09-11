@@ -27,29 +27,42 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 ## Step 3: Apply the Database Schema
 
-### Option 1: Using the Supabase Dashboard
+All database changes are managed using migrations in the `supabase/migrations/` directory. Do not manually apply a separate `schema.sql` file.
 
-1. Go to your Supabase project dashboard
-2. Navigate to the SQL Editor
-3. Copy the contents of `schema.sql` from this directory
-4. Paste into the SQL Editor and run the query
+Option A — Automated (recommended):
+- Run the guided setup that supports Local (Docker) or Remote (Production):
+  ```bash
+  npm run setup-db
+  ```
+  You can also run it non-interactively:
+  ```bash
+  # Local dev (Docker)
+  npm run setup-db -- --env=local
 
-### Option 2: Using the Supabase CLI
+  # Remote (push to linked Supabase project)
+  npm run setup-db -- --env=remote --project-ref=YOUR_PROJECT_REF
+  ```
 
+Option B — Manual via Supabase CLI:
 1. Install the Supabase CLI if you haven't already:
    ```bash
    npm install -g supabase
    ```
 
-2. Link your project:
+2. Link your project (remote only):
    ```bash
    supabase link --project-ref your-project-ref
    ```
 
-3. Apply the schema:
+3. Apply all migrations:
    ```bash
    supabase db push
    ```
+
+This will set up your database schema according to the migration files. For reference, you can generate a full schema dump using:
+```bash
+supabase db dump
+```
 
 ## Step 4: Enable Authentication
 
@@ -64,6 +77,8 @@ The `types/database.ts` file contains TypeScript types that match the database s
 ## Step 6: Test the Database Connection
 
 You can test the database connection by running the application and trying to create a poll or vote on an existing poll.
+
+Tip: For local development, ensure Docker Desktop is running. The guided setup will start the local Supabase stack and reset/apply migrations.
 
 ## Troubleshooting
 
