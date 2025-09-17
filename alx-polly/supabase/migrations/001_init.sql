@@ -1,9 +1,10 @@
 -- Initialization migration for ALX-Polly database
 
 CREATE TABLE IF NOT EXISTS public.users (
-  id UUID REFERENCES auth.users NOT NULL PRIMARY KEY,
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   name TEXT,
-  email TEXT UNIQUE NOT NULL,
+  -- Switch to CITEXT if you enabled the citext extension above
+  email TEXT UNIQUE NOT NULL,  email TEXT UNIQUE NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
@@ -12,8 +13,7 @@ CREATE TABLE IF NOT EXISTS public.polls (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   question TEXT NOT NULL,
   is_active BOOLEAN DEFAULT TRUE NOT NULL,
-  is_public BOOLEAN DEFAULT TRUE NOT NULL,
-  created_by UUID REFERENCES public.users(id) NOT NULL,
+  created_by UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,  created_by UUID REFERENCES public.users(id) NOT NULL,
   end_date TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL
@@ -31,9 +31,8 @@ CREATE TABLE IF NOT EXISTS public.votes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   poll_id UUID REFERENCES public.polls(id) ON DELETE CASCADE NOT NULL,
   option_id UUID REFERENCES public.poll_options(id) ON DELETE CASCADE NOT NULL,
-  user_id UUID REFERENCES public.users(id) NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL,  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
   -- Each user can only vote once per poll
   UNIQUE(poll_id, user_id)
 );
@@ -94,9 +93,10 @@ CREATE POLICY "Users can create polls"
   WITH CHECK (created_by = auth.uid());
 
 -- Users can update their own polls
-CREATE POLICY "Users can update their own polls" 
+CREATE POLICY "Users can update their own polls"  
   ON public.polls FOR UPDATE 
-  USING (created_by = auth.uid());
+  USING (created_by = auth.uid())
+  WITH CHECK (created_by = auth.uid());
 
 -- Users can delete their own polls
 CREATE POLICY "Users can delete their own polls" 
@@ -138,6 +138,11 @@ CREATE POLICY "Users can update options for their own polls"
     poll_id IN (
       SELECT id FROM public.polls WHERE created_by = auth.uid()
     )
+  )
+  WITH CHECK (
+    poll_id IN (
+      SELECT id FROM public.polls WHERE created_by = auth.uid()
+    )
   );
 
 -- Users can delete options for their own polls
@@ -163,15 +168,20 @@ CREATE POLICY "Anyone can view votes for public polls"
 CREATE POLICY "Users can view votes for their own polls" 
   ON public.votes FOR SELECT 
   USING (
-    poll_id IN (
-      SELECT id FROM public.polls WHERE created_by = auth.uid()
-    )
-  );
-
 -- Users can vote on public polls or their own polls
 CREATE POLICY "Users can vote on public polls or their own polls" 
   ON public.votes FOR INSERT 
   WITH CHECK (
+    user_id = auth.uid()
+    AND EXISTS (
+      SELECT 1
+      FROM public.polls p
+      WHERE p.id = poll_id
+        AND (p.is_public = TRUE OR p.created_by = auth.uid())
+CREATE POLICY "Users can update their own votes" 
+  ON public.votes FOR UPDATE 
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());  );  WITH CHECK (
     poll_id IN (
       SELECT id FROM public.polls WHERE is_public = TRUE OR created_by = auth.uid()
     ) AND user_id = auth.uid()
@@ -180,7 +190,8 @@ CREATE POLICY "Users can vote on public polls or their own polls"
 -- Users can update their own votes
 CREATE POLICY "Users can update their own votes" 
   ON public.votes FOR UPDATE 
-  USING (user_id = auth.uid());
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
 
 -- Users can delete their own votes
 CREATE POLICY "Users can delete their own votes" 
@@ -205,20 +216,18 @@ CREATE TRIGGER update_polls_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at();
 
-CREATE TRIGGER update_poll_options_updated_at
-  BEFORE UPDATE ON public.poll_options
-  FOR EACH ROW
-  EXECUTE FUNCTION public.update_updated_at();
-
-CREATE TRIGGER update_votes_updated_at
-  BEFORE UPDATE ON public.votes
-  FOR EACH ROW
-  EXECUTE FUNCTION public.update_updated_at();
-
--- Create function to get total votes for a poll
 CREATE OR REPLACE FUNCTION public.get_poll_total_votes(poll_id UUID)
-RETURNS INTEGER
+RETURNS BIGINT
 LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $
+DECLARE
+  total BIGINT;
+BEGIN
+  SELECT COUNT(*) INTO total FROM public.votes v WHERE v.poll_id = $1;
+  RETURN total;
+END;
+$;LANGUAGE plpgsql
 SET search_path = public, pg_temp
 AS $$
 DECLARE
