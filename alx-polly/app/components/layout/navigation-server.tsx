@@ -1,11 +1,12 @@
 import Link from "next/link"
 import { Button } from "@/app/components/ui/button"
-import { getCurrentUser } from "@/lib/actions/auth"
+import { getCurrentUser, getCurrentProfile } from "@/lib/actions/auth"
 import { signOutAction } from "@/lib/actions/auth"
 import { formatUserDisplayName } from "@/lib/auth-utils"
 
 export async function NavigationServer() {
   const user = await getCurrentUser()
+  const profile = user ? await getCurrentProfile() : null
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-200 text-black">
@@ -33,6 +34,14 @@ export async function NavigationServer() {
                 className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
               >
                 Create Poll
+              </Link>
+            )}
+            {profile?.role === 'admin' && (
+              <Link 
+                href="/admin" 
+                className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+              >
+                Admin
               </Link>
             )}
           </div>

@@ -44,3 +44,41 @@ Before finalizing your response, you MUST verify the following:
 - Is the Supabase client used for all database interactions?
 - Are shadcn/ui components used for the UI where appropriate?
 - Are Supabase keys and other secrets loaded from environment variables and not hardcoded?
+
+## Security & Auth Rules (Supabase)
+
+These rules are mandatory for all authentication, authorization, and critical flows.
+
+### Tokens, Sessions, and the Free Plan
+- Access tokens (JWT) are short-lived and signed by Supabase; their lifetime is configured in the Supabase Dashboard. On the Free plan we cannot customize this value from code.
+- Refresh tokens are long-lived and managed by Supabase with rotation and optional replay detection.
+    - On the Free plan, refresh tokens do not have a hard expiry (no fixed TTL). Sessions can continue indefinitely via refresh until sign-out or explicit revocation.
+    - On the Pro plan, you can time-box sessions and set inactivity limits (which effectively cap refresh token longevity).
+- App-enforced session length: we use HTTP-only cookies to define how long a user stays signed in within our app.
+    - Free plan: choose a reasonable cookie `maxAge` (e.g., hours/days) to force re-login when it expires.
+    - Pro plan: set cookie `maxAge` less than or equal to your configured time-box/inactivity limits.
+- Always set auth cookies with: `httpOnly: true`, `secure: true`, `sameSite: 'lax'`, `path: '/'`.
+
+### Roles and RLS
+- User role lives in the JWT claims (e.g., `app_metadata.role`). Clients can read payloads but cannot modify them without invalidating the signature.
+- Implement RLS policies that allow admin bypass via verified claims only. Pattern:
+    - `USING (auth.jwt()->>'role' = 'admin' OR created_by = auth.uid())`
+    - `WITH CHECK (auth.jwt()->>'role' = 'admin' OR created_by = auth.uid())`
+- Never ship the `service_role` key to the browser. Admin-only operations must execute server-side.
+- Keep RLS policy predicates consistent with table schema. If a policy references `is_public`, ensure the column exists, or rename the policy to match the actual column.
+
+### Critical Flows Require Recent Authentication
+- For destructive or sensitive actions (delete poll, change email, manage users, admin actions):
+    - Require a “recent login” by checking the access token age (`iat` claim). If older than our threshold (e.g., 30 minutes), redirect to the login page and resume the flow after re-auth.
+    - Do not rely on client-visible state; the check must happen server-side before executing the action.
+
+### Storage & Transport
+- Never store access/refresh tokens in `localStorage` or non-HTTP-only cookies.
+- Only transmit tokens over HTTPS.
+- Do not put secrets or sensitive PII inside JWT custom claims. Roles/flags are fine; secrets are not.
+
+### Implementation Checklist (add to PRs touching auth/roles)
+- Cookies configured with secure defaults and an explicit `maxAge` aligned with refresh token TTL.
+- Critical flows enforce a recent-auth check before mutation.
+- RLS policies exist for every table and align with actual schema columns; admin bypass checks JWT role claims, not client headers.
+- No usage of `service_role` in client-side code; server-only keys read from environment variables.

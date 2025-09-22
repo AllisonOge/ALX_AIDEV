@@ -5,6 +5,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { AuthError } from '@supabase/supabase-js'
 import { User } from '@supabase/supabase-js'
+import type { Profile } from '@/types/database'
 import { createUser } from './users'
 
 export interface AuthActionResult {
@@ -12,6 +13,8 @@ export interface AuthActionResult {
   error?: string
   message?: string
 }
+
+export type SessionUser = User & { profile?: Profile | null }
 
 /**
  * Validates an email address format.
@@ -132,7 +135,7 @@ export async function signUpAction(formData: FormData): Promise<void> {
     // Insert user into users table with UUID from Supabase Auth
     const userId = data.user?.id
     if (userId) {
-      const userInsertResult = await createUser({ id: userId, email, name })
+      const userInsertResult = await createUser({ id: userId, email, name, role: 'user' })
       if (!userInsertResult.success) {
         // Optionally handle DB error (log, notify, etc.)
         console.error('Failed to insert user into users table:', userInsertResult.error)
@@ -230,6 +233,36 @@ export async function getCurrentUser(): Promise<User | null> {
     console.error('Get current user error:', error)
     return null
   }
+}
+
+/**
+ * Fetch the current user's profile (users row) with role and details.
+ */
+export async function getCurrentProfile(): Promise<Profile | null> {
+  try {
+    const supabase = await getSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+    if (error) {
+      console.error('Get profile error:', error)
+      return null
+    }
+    return data as Profile
+  } catch (error) {
+    console.error('Get current profile error:', error)
+    return null
+  }
+}
+
+/** Determine if current user is admin by checking profile.role */
+export async function isAdmin(): Promise<boolean> {
+  const profile = await getCurrentProfile()
+  return profile?.role === 'admin'
 }
 
 /**

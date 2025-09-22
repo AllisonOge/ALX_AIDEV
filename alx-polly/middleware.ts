@@ -13,6 +13,7 @@ export async function middleware(request: NextRequest) {
   const isProtectedRoute = request.nextUrl.pathname.startsWith('/polls/create') || 
                           request.nextUrl.pathname.startsWith('/polls/') && 
                           !request.nextUrl.pathname.startsWith('/polls/page');
+  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
 
   // Redirect authenticated users away from auth pages
   if (user && isAuthPage) {
@@ -20,8 +21,20 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect unauthenticated users from protected routes
-  if (!user && isProtectedRoute) {
+  if (!user && (isProtectedRoute || isAdminRoute)) {
     return NextResponse.redirect(new URL('/auth/login', request.url));
+  }
+
+  // For admin routes, verify the user is admin
+  if (user && isAdminRoute) {
+    const { data: profile } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+    if (profile?.role !== 'admin') {
+      return NextResponse.redirect(new URL('/polls', request.url));
+    }
   }
 
   return supabaseResponse;

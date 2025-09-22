@@ -8,6 +8,7 @@ export type Database = {
           id: string;
           name: string | null;
           email: string;
+          role: string;
           created_at: string;
           updated_at: string;
         };
@@ -15,6 +16,7 @@ export type Database = {
           id: string;
           name?: string | null;
           email: string;
+          role?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -22,6 +24,7 @@ export type Database = {
           id?: string;
           name?: string | null;
           email?: string;
+          role?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -149,3 +152,9 @@ export type UpdateUser = UpdateTables<'users'>;
 export type UpdatePoll = UpdateTables<'polls'>;
 export type UpdatePollOption = UpdateTables<'poll_options'>;
 export type UpdateVote = UpdateTables<'votes'>;
+
+// Roles
+export type Role = 'user' | 'admin';
+
+// Convenience profile type
+export type Profile = User;

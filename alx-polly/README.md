@@ -1,12 +1,14 @@
 
 # PollApp - Next.js Polling Application
 
-PollApp is a modern polling platform scaffolded with Next.js 14, TypeScript, and Tailwind CSS. It provides a foundation for building interactive polls, user authentication, and real-time features. The current state is a scaffold with placeholder functionality and planned enhancements.
+PollApp is a modern polling platform built with Next.js, TypeScript, and Tailwind CSS. It supports regular users and admins, including admin analytics and moderation tools.
 
 ## Features
 
-### Core Features (Scaffolded)
-- User Authentication: Login and registration pages
+### Core Features
+- Authentication: Login, registration, password reset, email verification
+- User Roles: Regular users and admins (with admin-only routes/pages)
+- Admin Pages: Analytics dashboard and content moderation (delete polls)
 - Poll Creation: Create polls with multiple options
 - Poll Voting: Voting interface (placeholder)
 - Poll Browsing: Browse active and ended polls
@@ -14,7 +16,7 @@ PollApp is a modern polling platform scaffolded with Next.js 14, TypeScript, and
 - Modern UI: Shadcn components, Tailwind CSS
 
 ### Planned Features & Enhancements
-- User role management (admin, regular users)
+- Admin user management UI (promote/demote users)
 - Poll result charts (charting library)
 - Comments/discussion threads on polls
 - Improved mobile-responsiveness & accessibility
@@ -58,14 +60,30 @@ alx-polly/
 	npm install
 	```
 3. Set up Supabase:
-	- Follow the instructions in [`SETUP.md`](./SETUP.md) for authentication setup.
 	- For database setup and migrations, see [`supabase/SETUP.md`](./supabase/SETUP.md).
 	- Add your Supabase credentials to `.env.local` as described in those guides.
+	- Apply migrations, including roles and admin policies (see below).
 4. Start the development server:
 	```bash
 	npm run dev
 	```
 5. Visit [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Database Migrations (roles and admin)
+
+This project includes a migration that adds a `role` column to `public.users` and policies granting admins full access:
+
+- Migration file: `supabase/migrations/002_roles_and_admin.sql`
+
+You can apply migrations using the Supabase CLI:
+
+```bash
+npx supabase start
+npx supabase migration up # for none destructive or
+npx supabase db reset # for destructive when db is already setup otherwise the setup instructions in SETUP.md will work just fine
+```
+
+If you’re using the Supabase dashboard, open the SQL editor and run the contents of the migration file.
 
 ## Available Routes
 
@@ -76,6 +94,12 @@ alx-polly/
 - `/auth/verify-email` - Email verification
 - `/polls` - Browse polls
 - `/polls/create` - Create poll
+- `/admin` - Admin home (admins only)
+- `/admin/dashboard` - Analytics overview (admins only)
+- `/admin/moderation` - Content moderation (admins only)
+
+Notes:
+- Admin routes are protected in `middleware.ts` and in server components. Non-admins are redirected.
 
 ## Component Overview
 
@@ -93,6 +117,28 @@ alx-polly/
 - Navigation: Header navigation (auth state aware)
 - Button: Reusable button (Shadcn)
 
+## Admin & Roles
+
+- Users have a `role` in `public.users`: either `user` (default) or `admin`.
+- Admins can access `/admin/**`, see analytics (counts of users, polls, and votes), and delete any poll from moderation.
+- The navbar displays an “Admin” link when the signed-in profile has `role = 'admin'`.
+
+### Promote the First Admin (current approach)
+
+Initially, all registered users are created with `role = 'user'`. To elevate a user to admin today, use one of these methods:
+
+1) Supabase SQL (recommended)
+
+```sql
+update public.users
+set role = 'admin'
+where email = 'your-email@example.com';
+```
+
+2) Supabase Dashboard → Table editor: Edit the user’s `role` to `admin`.
+
+There are server actions (`promoteToAdmin`, `demoteToUser`) scaffolded for future UI, but changing roles via UI requires an existing admin and is not exposed in the current interface.
+
 
 ## Current State
 This project is scaffolded and under active development. Most features are placeholders and require backend/API/database integration. See the checklist below for planned work:
@@ -103,8 +149,9 @@ This project is scaffolded and under active development. Most features are place
 - [ ] Authentication state management
 - [ ] Real-time voting updates
 - [ ] User profile management
-- [ ] Poll analytics and insights
-- [ ] User role management (admin vs. regular users)
+- [x] Admin role, gating, and pages (dashboard, moderation)
+- [ ] Poll analytics and insights (charts)
+- [ ] Admin user management UI (promote/demote)
 - [ ] Poll result charts (charting library)
 - [ ] Comments/discussion threads on polls
 - [ ] Mobile-responsiveness & accessibility improvements
