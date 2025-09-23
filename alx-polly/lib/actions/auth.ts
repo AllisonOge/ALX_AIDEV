@@ -80,8 +80,8 @@ export async function signInAction(formData: FormData): Promise<void> {
       redirect(`${redirectPath}?error=${encodeURIComponent(await getAuthErrorMessage(error))}`)
     }
 
-    // Success - redirect to polls page
-    redirect("/polls")
+    // Success - redirect to polls page with toast
+    redirect(`/polls?success=${encodeURIComponent('Signed in successfully')}`)
   } catch (error) {
     handleAuthError(error, redirectPath)
   }
@@ -144,7 +144,7 @@ export async function signUpAction(formData: FormData): Promise<void> {
       console.error('No user ID returned from Supabase signUp')
     }
 
-    redirect(`${redirectPath}/success`)
+  redirect(`${redirectPath}/success?success=${encodeURIComponent('Registration successful; please verify your email')}`)
   } catch (error) {
     handleAuthError(error, redirectPath)
   }
@@ -161,8 +161,8 @@ export async function signOutAction(): Promise<void> {
   } catch (error) {
     console.error('Sign out error:', error)
   }
-  
-  redirect('/auth/login')
+
+  redirect('/auth/login?success=' + encodeURIComponent('Signed out'))
 }
 
 /**

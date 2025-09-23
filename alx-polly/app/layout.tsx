@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { NavigationServer } from "@/app/components/layout/navigation-server";
+import { FlashToast } from "@/app/components/ui/flash-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,6 +31,7 @@ export default function RootLayout({
       >
         <NavigationServer />
         <main>{children}</main>
+        <FlashToast />
       </body>
     </html>
   );

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { createPoll } from '@/lib/actions/polls'
 import { Button } from "@/app/components/ui/button"
+import { useFlashToast } from "@/app/hooks/use-flash-toast"
 
 interface PollOption {
   id: string
@@ -10,6 +11,7 @@ interface PollOption {
 }
 
 export function CreatePollForm() {
+  const { showError, showSuccess } = useFlashToast()
   const [formData, setFormData] = useState({
     question: "",
     options: [
@@ -91,6 +93,7 @@ export function CreatePollForm() {
       setLoading(false)
       if (result.error) {
         setSubmitError(result.error)
+        showError(result.error)
       } else {
         // Reset form
         setFormData({
@@ -103,6 +106,7 @@ export function CreatePollForm() {
           isPublic: true
         })
         setErrors({})
+        showSuccess('Poll created')
       }
     }
   }

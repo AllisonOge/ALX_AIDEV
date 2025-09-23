@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { votePoll } from '@/lib/actions/polls'
 import { Button } from "@/app/components/ui/button"
+import { useFlashToast } from "@/app/hooks/use-flash-toast"
 
 interface PollOption {
   id: string;
@@ -27,6 +28,7 @@ interface PollCardProps {
 }
 
 export function PollCard({ id, question, options, totalVotes, is_active, end_date }: PollCardProps) {
+  const { showError, showSuccess } = useFlashToast()
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
 
@@ -41,8 +43,10 @@ export function PollCard({ id, question, options, totalVotes, is_active, end_dat
       setLoading(false)
       if (result.error) {
         setVoteError(result.error)
+        showError(result.error)
       } else {
         setHasVoted(true)
+        showSuccess('Vote submitted')
       }
     }
   }
